@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 
 from app.aws_iot import AwsIotClient, ConsoleIotClient
 from app.config import AppConfig

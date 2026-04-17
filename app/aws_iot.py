@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections.abc import Callable
 from typing import Protocol
 
 from app.config import AppConfig
@@ -10,6 +11,7 @@ from app.config import AppConfig
 class IoTClient(Protocol):
     def connect(self) -> None: ...
     def publish(self, topic: str, payload: dict[str, object]) -> None: ...
+    def subscribe(self, topic: str, callback: Callable[[str, bytes], None]) -> None: ...
     def disconnect(self) -> None: ...
 
 
@@ -22,6 +24,13 @@ class ConsoleIotClient:
 
     def publish(self, topic: str, payload: dict[str, object]) -> None:
         self.logger.info("DRY RUN publish topic=%s payload=%s", topic, json.dumps(payload))
+
+    def subscribe(self, topic: str, callback: Callable[[str, bytes], None]) -> None:
+        del callback
+        self.logger.info(
+            "DRY RUN subscribe topic=%s (shadow messages are not delivered in dry-run)",
+            topic,
+        )
 
     def disconnect(self) -> None:
         self.logger.info("Dry-run client disconnected.")
@@ -69,7 +78,36 @@ class AwsIotClient:
 
         message = json.dumps(payload)
         self._connection.publish(topic=topic, payload=message, qos=self._mqtt_qos)
-        self.logger.info("Published telemetry topic=%s thing=%s", topic, payload["thing_name"])
+        if topic.startswith("$aws/"):
+            self.logger.info("Published IoT service topic prefix=%s", topic[: min(72, len(topic))])
+        else:
+            thing = payload.get("thing_name", "")
+            self.logger.info("Published telemetry topic=%s thing=%s", topic, thing)
+
+    def subscribe(self, topic: str, callback: Callable[[str, bytes], None]) -> None:
+        if self._connection is None:
+            raise RuntimeError("IoT client is not connected.")
+
+        from awscrt import mqtt as mqtt_mod
+
+        def _wrapper(
+            recv_topic: str,
+            recv_payload: bytes,
+            _dup: bool,
+            _qos: mqtt_mod.QoS,
+            _retain: bool,
+            **_: object,
+        ) -> None:
+            try:
+                callback(recv_topic, recv_payload)
+            except Exception:
+                self.logger.exception("MQTT subscription callback failed topic=%s", recv_topic[:48])
+
+        future, _packet_id = self._connection.subscribe(
+            topic=topic, qos=self._mqtt_qos, callback=_wrapper
+        )
+        future.result()
+        self.logger.info("Subscribed to IoT topic prefix=%s", topic[: min(72, len(topic))])
 
     def disconnect(self) -> None:
         if self._connection is None:

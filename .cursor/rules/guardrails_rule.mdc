@@ -1,0 +1,99 @@
+---
+description: Vibe Guardrails — fetch and enforce project-specific secure coding guardrails from SRAI
+alwaysApply: true
+---
+
+# Vibe Guardrails — Secure by Code
+
+**Enforce project-specific security guardrails during every code-generation task.**
+
+This rule complements the PWNISMS threat model ("secure by design") with concrete, project-level coding dos and don'ts ("secure by code"). Guardrails are maintained in SRAI and fetched via `security-review-mcp`.
+
+---
+
+## When this rule applies
+
+This rule is **active for every code-generation or code-modification task** — including:
+
+- Implementing new features or endpoints
+- Fixing bugs that touch security-relevant code
+- Refactoring code that handles auth, input, secrets, data storage, or network
+- Generating boilerplate, scaffolding, or templates that will run in production
+
+### When to skip
+
+Skip guardrail enforcement for tasks with **no code output** (documentation, Q&A, formatting, renaming).
+
+---
+
+## Required behavior
+
+### 1. Use the guardrails-selection skill at the start of every code task
+
+Before writing or modifying code, you must read and follow `.cursor/skills/guardrails-selection/SKILL.md`.
+
+That skill is mandatory because the IDE must not leave guardrail selection to chance. The required workflow is:
+
+- **Analyze the task first** — infer what the user is actually building, what components are touched, what categories are involved, and what threats might occur.
+- **Resolve the project** — use `find_project_by_name` with `name="iot-python"` to obtain `project_id`.
+- **Load the broad catalog** — call `get_guardrails` with `project_id`.
+- **Shortlist intentionally** — choose only the guardrails that mitigate the categories and likely threats for the current task.
+- **Hydrate the exact shortlist** — call `get_guardrail_by_id` for the shortlisted guardrail ids so implementation uses the exact selected guardrails, not a vague reading of the full catalog.
+- **Preserve the shortlist** — keep the selected existing guardrails in context so `ctm_sync` can include the same guardrails later without re-querying.
+
+The broad `get_guardrails` result is only the candidate catalog. The active implementation guardrails must come from the shortlisted `get_guardrail_by_id` result.
+
+Each guardrail used for implementation should preserve these fields:
+
+| Field | Description |
+|---|---|
+| `id` | Stable guardrail identifier used with `get_guardrail_by_id` |
+| `title` | Short name of the guardrail |
+| `rule_type` | `must` (mandatory) or `must_not` (prohibition) |
+| `category` | Grouping label (e.g. `authentication`, `input_validation`, `secrets`) or `null` |
+| `instruction` | The actionable coding directive |
+
+If `get_guardrails` returns additional metadata such as `source_ref`, use it as supporting context during selection.
+
+### 2. Apply guardrails during code generation
+
+- **`must` rules (DOs):** Treat as mandatory implementation requirements. Every line of generated code must satisfy all applicable `must` guardrails.
+- **`must_not` rules (DON'Ts):** Treat as hard prohibitions. Generated code must never violate a `must_not` guardrail.
+- If a guardrail conflicts with the user's explicit instruction, **flag the conflict** to the user and ask for confirmation before proceeding.
+- If no guardrails are returned (empty list), proceed normally using baseline PWNISMS controls.
+
+### 3. Cross-reference with PWNISMS
+
+Guardrails and PWNISMS are complementary:
+
+- Guardrails provide **project-specific, concrete rules** derived from prior threat reviews, compliance requirements, and team decisions.
+- PWNISMS provides **universal threat-category coverage** to catch gaps that guardrails may not yet cover.
+- When PWNISMS analysis reveals a gap not covered by any existing guardrail, **create a new guardrail on the fly** and apply it immediately (marked `source: "ide_generated"` in CTM sync).
+
+### 4. Report guardrail compliance
+
+After code generation, include a brief guardrails compliance summary:
+
+- List which guardrails were applied (by title), distinguishing existing vs IDE-generated.
+- Flag any guardrails that could not be fully satisfied and explain why.
+- Do not drop shortlisted existing guardrails from session context. `ctm_sync` must receive the same shortlist, including any unsatisfied items with notes.
+
+---
+
+## Guardrail lifecycle — updates and new guardrails
+
+Guardrails are living artifacts. The IDE agent can create, apply, and update them:
+
+- **New guardrail**: When threat modeling or code review reveals a recurring security pattern not yet captured, the IDE agent creates and applies a new guardrail on the fly. These are reported to SRAI via CTM sync with `source: "ide_generated"`.
+- **Edit suggestion**: When an existing guardrail is too broad, too narrow, or outdated, suggest an update to the user.
+- All guardrails — existing and IDE-generated — flow into the single `guardrails_applied` array in the CTM sync payload.
+
+---
+
+## Tool Reference
+
+| Tool | Purpose |
+|---|---|
+| `get_guardrails` | Fetch the broad project guardrails catalog (requires `project_id`) |
+| `get_guardrail_by_id` | Fetch the exact shortlisted guardrails that will govern implementation |
+| `find_project_by_name` | Resolve project by name to get `project_id` |

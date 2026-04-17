@@ -1,0 +1,514 @@
+{
+  "_doc": "Maps filesystem signals to guardrail pack IDs. Each entry defines what to look for and which pack to activate.",
+
+  "universal": {
+    "_doc": "Always included regardless of detection",
+    "packs": ["owasp-asvs"]
+  },
+
+  "mobile_universal": {
+    "_doc": "Included when any mobile platform is detected",
+    "trigger_packs": ["flutter", "react-native", "swift", "objective-c", "kotlin"],
+    "packs": ["owasp-masvs"]
+  },
+
+  "languages": {
+    "typescript": {
+      "manifest_files": ["tsconfig.json", "tsconfig.base.json"],
+      "file_extensions": [".ts", ".tsx"],
+      "pack": "typescript"
+    },
+    "nodejs": {
+      "manifest_files": ["package.json"],
+      "file_extensions": [".js", ".mjs", ".cjs"],
+      "pack": "nodejs"
+    },
+    "python": {
+      "manifest_files": ["requirements.txt", "pyproject.toml", "setup.py", "setup.cfg", "Pipfile", "poetry.lock"],
+      "file_extensions": [".py"],
+      "pack": null,
+      "_note": "Python has no standalone pack; frameworks (django, flask, fastapi) cover it"
+    },
+    "go": {
+      "manifest_files": ["go.mod", "go.sum"],
+      "file_extensions": [".go"],
+      "pack": "go"
+    },
+    "java": {
+      "manifest_files": ["pom.xml", "build.gradle", "build.gradle.kts", "settings.gradle", "settings.gradle.kts"],
+      "file_extensions": [".java"],
+      "pack": null,
+      "_note": "Java framework packs (spring-boot, java-ee) are more specific"
+    },
+    "kotlin": {
+      "manifest_files": ["build.gradle.kts"],
+      "file_extensions": [".kt", ".kts"],
+      "dependency_signals": { "build.gradle.kts": ["kotlin"] },
+      "pack": "kotlin"
+    },
+    "php": {
+      "manifest_files": ["composer.json", "composer.lock"],
+      "file_extensions": [".php"],
+      "pack": "php"
+    },
+    "ruby": {
+      "manifest_files": ["Gemfile", "Gemfile.lock"],
+      "file_extensions": [".rb"],
+      "pack": null,
+      "_note": "Ruby framework pack (ruby-on-rails) is more specific"
+    },
+    "rust": {
+      "manifest_files": ["Cargo.toml", "Cargo.lock"],
+      "file_extensions": [".rs"],
+      "pack": "rust"
+    },
+    "c": {
+      "file_extensions": [".c", ".h"],
+      "manifest_files": ["CMakeLists.txt", "Makefile"],
+      "pack": "c"
+    },
+    "cpp": {
+      "file_extensions": [".cpp", ".cxx", ".cc", ".hpp", ".hxx"],
+      "manifest_files": ["CMakeLists.txt"],
+      "pack": "cpp"
+    },
+    "swift": {
+      "manifest_files": ["Package.swift"],
+      "file_extensions": [".swift"],
+      "config_files": ["*.xcodeproj", "*.xcworkspace"],
+      "pack": "swift"
+    },
+    "objective-c": {
+      "file_extensions": [".m", ".mm"],
+      "pack": "objective-c"
+    },
+    "groovy": {
+      "file_extensions": [".groovy"],
+      "pack": "groovy"
+    },
+    "csharp": {
+      "manifest_files": ["*.csproj", "*.sln"],
+      "file_extensions": [".cs"],
+      "pack": null,
+      "_note": "C# framework pack (dotnet-aspnet-core) is more specific"
+    }
+  },
+
+  "frameworks": {
+    "express": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["express"] },
+      "pack": "express"
+    },
+    "fastify": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["fastify"] },
+      "pack": "fastify"
+    },
+    "honojs": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["hono"] },
+      "pack": "honojs"
+    },
+    "nestjs": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["@nestjs/core"] },
+      "config_files": ["nest-cli.json"],
+      "pack": "nestjs"
+    },
+    "nextjs": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["next"] },
+      "config_files": ["next.config.js", "next.config.mjs", "next.config.ts"],
+      "pack": "nextjs"
+    },
+    "react": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["react", "react-dom"] },
+      "pack": "react"
+    },
+    "angular": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["@angular/core"] },
+      "config_files": ["angular.json"],
+      "pack": "angular"
+    },
+    "vuejs": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["vue"] },
+      "config_files": ["vue.config.js", "vite.config.ts", "nuxt.config.ts"],
+      "pack": "vuejs"
+    },
+    "electron": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["electron"] },
+      "pack": "electron"
+    },
+    "react-native": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["react-native"] },
+      "pack": "react-native"
+    },
+    "django": {
+      "ecosystem": "python",
+      "dependency_signals": {
+        "requirements.txt": ["django", "Django"],
+        "pyproject.toml": ["django", "Django"],
+        "Pipfile": ["django", "Django"]
+      },
+      "config_files": ["manage.py"],
+      "directory_signals": ["*/settings.py", "*/wsgi.py"],
+      "pack": "django"
+    },
+    "flask": {
+      "ecosystem": "python",
+      "dependency_signals": {
+        "requirements.txt": ["flask", "Flask"],
+        "pyproject.toml": ["flask", "Flask"]
+      },
+      "pack": "flask"
+    },
+    "fastapi": {
+      "ecosystem": "python",
+      "dependency_signals": {
+        "requirements.txt": ["fastapi"],
+        "pyproject.toml": ["fastapi"]
+      },
+      "pack": "fastapi"
+    },
+    "java-spring-boot": {
+      "ecosystem": "java",
+      "dependency_signals": {
+        "pom.xml": ["spring-boot-starter"],
+        "build.gradle": ["org.springframework.boot"]
+      },
+      "pack": "java-spring-boot"
+    },
+    "spring-security": {
+      "ecosystem": "java",
+      "dependency_signals": {
+        "pom.xml": ["spring-boot-starter-security", "spring-security"],
+        "build.gradle": ["spring-boot-starter-security", "spring-security"]
+      },
+      "pack": "spring-security"
+    },
+    "java-ee": {
+      "ecosystem": "java",
+      "dependency_signals": {
+        "pom.xml": ["javax.servlet", "jakarta.servlet", "javax.enterprise", "jakarta.enterprise"],
+        "build.gradle": ["javax.servlet", "jakarta.servlet"]
+      },
+      "config_files": ["web.xml"],
+      "pack": "java-ee"
+    },
+    "ruby-on-rails": {
+      "ecosystem": "ruby",
+      "dependency_signals": { "Gemfile": ["rails"] },
+      "config_files": ["config/routes.rb", "config/application.rb"],
+      "pack": "ruby-on-rails"
+    },
+    "laravel": {
+      "ecosystem": "php",
+      "dependency_signals": { "composer.json": ["laravel/framework"] },
+      "config_files": ["artisan"],
+      "directory_signals": ["app/Http/Controllers"],
+      "pack": "laravel"
+    },
+    "symfony": {
+      "ecosystem": "php",
+      "dependency_signals": { "composer.json": ["symfony/framework-bundle"] },
+      "config_files": ["config/bundles.php", "symfony.lock"],
+      "pack": "symfony"
+    },
+    "dotnet-aspnet-core": {
+      "ecosystem": "csharp",
+      "dependency_signals": { "*.csproj": ["Microsoft.AspNetCore"] },
+      "config_files": ["Program.cs", "Startup.cs", "appsettings.json"],
+      "pack": "dotnet-aspnet-core"
+    },
+    "flutter": {
+      "ecosystem": "dart",
+      "manifest_files": ["pubspec.yaml"],
+      "dependency_signals": { "pubspec.yaml": ["flutter"] },
+      "pack": "flutter"
+    },
+    "apollo-graphql": {
+      "ecosystem": "nodejs",
+      "dependency_signals": { "package.json": ["@apollo/server", "apollo-server", "apollo-server-express"] },
+      "pack": "apollo-graphql"
+    }
+  },
+
+  "auth_identity": {
+    "jwt": {
+      "dependency_signals": {
+        "package.json": ["jsonwebtoken", "jose", "@auth/core"],
+        "requirements.txt": ["pyjwt", "python-jose"],
+        "pyproject.toml": ["pyjwt", "python-jose"],
+        "Gemfile": ["jwt"],
+        "pom.xml": ["jjwt", "nimbus-jose-jwt"]
+      },
+      "pack": "jwt"
+    },
+    "oauth-oidc": {
+      "dependency_signals": {
+        "package.json": ["openid-client", "passport-oauth2", "oauth4webapi"],
+        "requirements.txt": ["authlib", "oauthlib"],
+        "pyproject.toml": ["authlib", "oauthlib"]
+      },
+      "pack": "oauth-oidc"
+    },
+    "auth0": {
+      "dependency_signals": {
+        "package.json": ["@auth0/nextjs-auth0", "auth0", "express-openid-connect"],
+        "requirements.txt": ["auth0-python"],
+        "pyproject.toml": ["auth0-python"]
+      },
+      "pack": "auth0"
+    },
+    "okta": {
+      "dependency_signals": {
+        "package.json": ["@okta/okta-sdk-nodejs", "@okta/oidc-middleware"],
+        "pom.xml": ["okta-spring-boot-starter"]
+      },
+      "pack": "okta"
+    },
+    "keycloak": {
+      "dependency_signals": {
+        "package.json": ["keycloak-connect", "keycloak-js"],
+        "pom.xml": ["keycloak-spring-boot-starter"]
+      },
+      "config_files": ["keycloak.json"],
+      "pack": "keycloak"
+    }
+  },
+
+  "ai_agent": {
+    "langchain": {
+      "dependency_signals": {
+        "requirements.txt": ["langchain"],
+        "pyproject.toml": ["langchain"],
+        "package.json": ["langchain"]
+      },
+      "pack": "langchain"
+    },
+    "langgraph": {
+      "dependency_signals": {
+        "requirements.txt": ["langgraph"],
+        "pyproject.toml": ["langgraph"]
+      },
+      "pack": "langgraph"
+    },
+    "llamaindex": {
+      "dependency_signals": {
+        "requirements.txt": ["llama-index", "llama_index"],
+        "pyproject.toml": ["llama-index", "llama_index"]
+      },
+      "pack": "llamaindex"
+    },
+    "crewai": {
+      "dependency_signals": {
+        "requirements.txt": ["crewai"],
+        "pyproject.toml": ["crewai"]
+      },
+      "pack": "crewai"
+    },
+    "mastra": {
+      "dependency_signals": {
+        "package.json": ["@mastra/core", "mastra"]
+      },
+      "pack": "mastra"
+    },
+    "ai-sdk": {
+      "dependency_signals": {
+        "package.json": ["ai", "@ai-sdk/openai", "@ai-sdk/anthropic"]
+      },
+      "pack": "ai-sdk"
+    },
+    "claude-agent-sdk": {
+      "dependency_signals": {
+        "package.json": ["@anthropic-ai/sdk"],
+        "requirements.txt": ["anthropic"],
+        "pyproject.toml": ["anthropic"]
+      },
+      "pack": "claude-agent-sdk"
+    },
+    "openai-agents-sdk": {
+      "dependency_signals": {
+        "package.json": ["openai"],
+        "requirements.txt": ["openai"],
+        "pyproject.toml": ["openai"]
+      },
+      "pack": "openai-agents-sdk"
+    },
+    "mcp": {
+      "dependency_signals": {
+        "package.json": ["@modelcontextprotocol/sdk"],
+        "requirements.txt": ["mcp"],
+        "pyproject.toml": ["mcp"]
+      },
+      "pack": "mcp"
+    }
+  },
+
+  "infrastructure": {
+    "docker": {
+      "config_files": ["Dockerfile", "docker-compose.yml", "docker-compose.yaml", ".dockerignore"],
+      "pack": "docker"
+    },
+    "kubernetes": {
+      "config_files": ["helmfile.yaml", "Chart.yaml", "kustomization.yaml"],
+      "directory_signals": ["k8s/", "kubernetes/", "helm/"],
+      "content_signals": { "*.yaml": ["apiVersion", "kind: Deployment", "kind: Service", "kind: Pod"] },
+      "pack": "kubernetes"
+    },
+    "terraform-aws": {
+      "file_extensions": [".tf"],
+      "content_signals": { "*.tf": ["provider \"aws\"", "aws_"] },
+      "pack": "terraform-aws"
+    },
+    "terraform-azure": {
+      "file_extensions": [".tf"],
+      "content_signals": { "*.tf": ["provider \"azurerm\"", "azurerm_"] },
+      "pack": "terraform-azure"
+    },
+    "terraform-gcp": {
+      "file_extensions": [".tf"],
+      "content_signals": { "*.tf": ["provider \"google\"", "google_"] },
+      "pack": "terraform-gcp"
+    },
+    "cloudformation": {
+      "content_signals": { "*.yaml": ["AWSTemplateFormatVersion"], "*.json": ["AWSTemplateFormatVersion"] },
+      "config_files": ["template.yaml", "template.json", "samconfig.toml"],
+      "pack": "cloudformation"
+    },
+    "nginx": {
+      "config_files": ["nginx.conf"],
+      "directory_signals": ["nginx/"],
+      "pack": "nginx"
+    }
+  },
+
+  "ci_cd": {
+    "github-actions": {
+      "directory_signals": [".github/workflows/"],
+      "pack": "github-actions"
+    },
+    "jenkins-pipeline": {
+      "config_files": ["Jenkinsfile"],
+      "pack": "jenkins-pipeline"
+    },
+    "argocd": {
+      "config_files": ["argocd-cm.yaml"],
+      "content_signals": { "*.yaml": ["argoproj.io"] },
+      "pack": "argocd"
+    }
+  },
+
+  "cloud_compute": {
+    "aws-lambda": {
+      "config_files": ["serverless.yml", "serverless.yaml", "serverless.ts", "sam.yaml", "samconfig.toml"],
+      "content_signals": {
+        "serverless.yml": ["provider:", "aws"],
+        "template.yaml": ["AWS::Serverless::Function", "AWS::Lambda::Function"]
+      },
+      "pack": "aws-lambda"
+    },
+    "azure-functions": {
+      "config_files": ["host.json", "local.settings.json"],
+      "directory_signals": ["function_app.py"],
+      "pack": "azure-functions"
+    },
+    "gcp-cloud-run": {
+      "config_files": ["app.yaml", "cloudbuild.yaml"],
+      "content_signals": { "*.yaml": ["gcr.io", "run.googleapis.com"] },
+      "pack": "gcp-cloud-run"
+    }
+  },
+
+  "databases": {
+    "mongodb": {
+      "dependency_signals": {
+        "package.json": ["mongoose", "mongodb"],
+        "requirements.txt": ["pymongo", "motor", "mongoengine"],
+        "pyproject.toml": ["pymongo", "motor"],
+        "Gemfile": ["mongoid"]
+      },
+      "pack": "mongodb"
+    },
+    "postgresql": {
+      "dependency_signals": {
+        "package.json": ["pg", "knex", "prisma", "typeorm", "sequelize"],
+        "requirements.txt": ["psycopg2", "asyncpg", "sqlalchemy"],
+        "pyproject.toml": ["psycopg2", "asyncpg", "sqlalchemy"],
+        "Gemfile": ["pg"],
+        "pom.xml": ["postgresql"]
+      },
+      "pack": "postgresql"
+    },
+    "mysql-mariadb": {
+      "dependency_signals": {
+        "package.json": ["mysql2", "mysql"],
+        "requirements.txt": ["mysqlclient", "pymysql", "aiomysql"],
+        "pyproject.toml": ["mysqlclient", "pymysql"],
+        "pom.xml": ["mysql-connector-java"]
+      },
+      "pack": "mysql-mariadb"
+    },
+    "redis": {
+      "dependency_signals": {
+        "package.json": ["redis", "ioredis"],
+        "requirements.txt": ["redis", "aioredis"],
+        "pyproject.toml": ["redis"],
+        "Gemfile": ["redis"]
+      },
+      "pack": "redis"
+    }
+  },
+
+  "messaging": {
+    "kafka": {
+      "dependency_signals": {
+        "package.json": ["kafkajs"],
+        "requirements.txt": ["confluent-kafka", "aiokafka"],
+        "pyproject.toml": ["confluent-kafka"],
+        "pom.xml": ["kafka-clients", "spring-kafka"]
+      },
+      "pack": "kafka"
+    },
+    "rabbitmq": {
+      "dependency_signals": {
+        "package.json": ["amqplib"],
+        "requirements.txt": ["pika", "aio-pika"],
+        "pyproject.toml": ["pika"],
+        "pom.xml": ["spring-boot-starter-amqp"]
+      },
+      "pack": "rabbitmq"
+    }
+  },
+
+  "api_protocols": {
+    "grpc": {
+      "dependency_signals": {
+        "package.json": ["@grpc/grpc-js"],
+        "requirements.txt": ["grpcio"],
+        "pyproject.toml": ["grpcio"],
+        "pom.xml": ["grpc-netty"]
+      },
+      "file_extensions": [".proto"],
+      "pack": "grpc"
+    },
+    "websockets": {
+      "dependency_signals": {
+        "package.json": ["ws", "socket.io"],
+        "requirements.txt": ["websockets"],
+        "pyproject.toml": ["websockets"]
+      },
+      "pack": "websockets"
+    },
+    "openapi-rest-api": {
+      "config_files": ["openapi.yaml", "openapi.json", "swagger.yaml", "swagger.json"],
+      "pack": "openapi-rest-api"
+    }
+  }
+}

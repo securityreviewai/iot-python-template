@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "project_name": "vibereview-test-template",
+  "profiled_at": "2026-04-17T00:00:00Z",
+  "profiled_by": "cursor-agent",
+  "detection_summary": {
+    "languages": ["python"],
+    "frameworks": [],
+    "infrastructure": ["docker"],
+    "databases": [],
+    "auth": [],
+    "ai_agent": [],
+    "ci_cd": ["github-actions"],
+    "cloud_compute": [],
+    "messaging": [],
+    "api_protocols": [],
+    "mobile": false
+  },
+  "guardrail_packs": [
+    "owasp-asvs",
+    "docker",
+    "github-actions"
+  ],
+  "pack_count": 3
+}

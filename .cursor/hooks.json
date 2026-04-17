@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "printf '%s\\n' '{\"additional_context\":\"## MANDATORY SECURITY GATE (Session Policy)\\n\\nFor ANY user request that has security impact (auth, crypto, input handling, secrets, network, data storage, dependencies, new APIs/endpoints, or any code handling untrusted data):\\n\\n**Plan order:**\\n1. **Fetch Vibe Guardrails (first)** - Use .cursor/skills/guardrails-selection/SKILL.md. Analyze the task, call get_guardrails from security-review-mcp to load the broad catalog, shortlist the relevant guardrails, then call get_guardrail_by_id for the shortlist. These exact shortlisted guardrails are the hard constraints on generated code.\\n2. **PWNISMS threat modeling (second)** - Run threat modeling as a guide before writing code. Use .cursor/skills/threat-modelling/SKILL.md. Cross-reference guardrails with PWNISMS findings to identify gaps. Document findings to inform secure implementation.\\n3. **Implement secure code (third)** - Use the threat model findings AND shortlisted guardrails as guides to create secure code. Every must guardrail must be satisfied; no must_not guardrail may be violated.\\n4. **ctm_sync (last)** - Push payload to SRAI only after implementation is done. Invoke ctm_sync agent (Task tool, subagent_type=ctm_sync) as the final step. Include the exact shortlisted guardrails from earlier plus any IDE-generated guardrails in the guardrails_applied payload field; do not query again during ctm_sync. See .cursor/agents/ctm_sync.md and .cursor/rules/ctm_sync_rule.mdc.\\n\\nNo blocking. No deferral. Guardrails enforce secure code; threat modeling guides the design; ctm_sync runs last to push to SRAI. Both ctm_sync and guardrail compliance are mandatory and should be part of your to-do.\"}'",
+        "timeout": 5
+      }
+    ]
+  }
+}

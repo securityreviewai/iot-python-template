@@ -1,0 +1,87 @@
+---
+description: ctm_sync agent trigger rule
+alwaysApply: true
+---
+# Continuous Threat Modeling Sync (`ctm_sync`)
+
+**Always synchronize threat models and guardrail compliance after they are (re)generated.**
+
+Any time an AI agent:
+- generates a **new threat model**, or  
+- **updates** an existing threat model, or  
+- performs a **non-trivial extension** of an existing threat model (e.g., adds new threat scenarios, countermeasures, data flows, or components), or
+- **applies vibe guardrails** during a code-generation task (existing or IDE-generated) and has guardrail compliance data to report,
+
+it **must immediately call** the `ctm_sync` agent to synchronize the latest threat modeling state and guardrail data.
+
+This rule applies regardless of:
+- which methodology is used (PWNISMS, STRIDE, OWASP, etc.),
+- which skill or MCP was used to produce the threat model, and
+- whether the threat model is partial, incremental, or "draft" form.
+
+If in doubt — **assume this rule applies**.
+
+---
+
+## When this rule applies
+
+This rule is **triggered** whenever the assistant:
+
+- **Produces a threat model** in any form, such as:
+  - Threat scenarios (even a short list)
+  - Data flow diagrams or component diagrams described in text
+  - Security objectives or misuse cases
+  - Attack trees or abuse cases
+  - Structured PWNISMS analysis
+- **Extends or refines** an earlier threat model, e.g.:
+  - "Add more threats for the Payments service"
+  - "Update the data flow for the auth system"
+  - "Refine the mitigations for threat X"
+- **Enforces guardrails** during code generation and has compliance data:
+  - Guardrails were shortlisted via the guardrails-selection workflow (`get_guardrails` + `get_guardrail_by_id`) and applied to generated code
+  - New guardrails were created by the IDE agent based on gaps found
+  - Existing guardrails were flagged as unsatisfiable or conflicting
+
+This includes both:
+- Threat modeling done **directly in this conversation**, and  
+- Threat modeling done by calling **MCP tools or skills** that output threat scenarios, countermeasures, data dictionaries, or other CTM artifacts.
+
+---
+
+## Required behavior
+
+**After completing any threat modeling step that produces or modifies threat content, or any code-generation step where guardrails were enforced, the assistant must:**
+
+1. **Ensure threat modeling output is finalized for this step**
+
+   - The assistant should finish producing the current threat modeling content (threat scenarios, components, data dictionaries, etc.) in the user-visible message or via tools.
+   - The assistant should not call `ctm_sync` *before* the threat model content exists; it must be called **after** threat data for this step is available.
+
+2. **Immediately call the `ctm_sync` agent**
+
+   - Use the `Task` tool (or equivalent agent launcher) with `subagent_type="ctm_sync"`.
+   - **Session routing:** In the prompt (or structured handoff), always include the **current chat's stable `chat_session_id`** — the same id for every `ctm_sync` in this conversation, and a new id for a different chat. Use the IDE/session id when exposed; otherwise generate one UUID at the start of the chat and reuse it. This ensures SRAI attaches events to the correct per-session workflow.
+   - Provide a clear, concise description in the `description`/`prompt` fields explaining:
+     - What system or component the threat model covers
+     - Whether this is a new threat model or an update
+     - Where the latest threat content can be found (e.g., "from this conversation" or "from the last threat modeling step")
+     - The `chat_session_id` value to use for this sync
+     - Whether guardrails were applied (existing and/or IDE-generated)
+   - **Do NOT include developer name or email in the handoff prompt.** The `ctm_sync` agent resolves user identity directly from the API. Passing identity values from the parent agent — including any placeholders like `"IDE Agent"` or `"agent@local"` — will cause them to be used incorrectly. Leave identity resolution entirely to `ctm_sync`.
+
+   **Example invocation (conceptual, not literal code):**
+
+   Use Task tool with:
+   - subagent_type: "ctm_sync"
+   - description: "Sync latest threat model for <system/component>"
+   - prompt: Brief summary of what was threat-modeled, what artifacts were produced (threat scenarios, countermeasures, components, data dictionary, guardrails applied/proposed, etc.), and that the agent should upload/update CTM data accordingly.
+   - readonly: false (it must be allowed to write/update CTM data)
+
+3. Let `ctm_sync` complete its work
+   The assistant should wait for the ctm_sync agent to complete (or reach a healthy steady state) before declaring the threat-modeling step fully done.
+   If ctm_sync returns errors that can be reasonably fixed (e.g., missing project name), the assistant should fix the issue and retry once, if possible.
+
+Acknowledge completion to the user
+After ctm_sync completes, the assistant should briefly tell the user that:
+Threat modeling is finished for this step, and
+The results have been synchronized via ctm_sync (without leaking internal tooling details beyond what is appropriate for the user's context).

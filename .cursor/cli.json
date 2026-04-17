@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Mcp(security-review-mcp:*)"
+    ],
+    "deny": []
+  }
+}

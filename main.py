@@ -5,7 +5,10 @@ import argparse
 from app.aws_iot import AwsIotClient, ConsoleIotClient
 from app.config import AppConfig
 from app.logging import configure_logging
+from app.iot_jobs import JobsBridge
+from app.remote_config import RemoteConfigPoller
 from app.service import TelemetryService
+from app.shadow import DeviceConfigStore, ShadowBridge, ShadowDeviceConfig
 
 
 def parse_args() -> argparse.Namespace:
@@ -41,7 +44,33 @@ def main() -> int:
             return 1
         client = AwsIotClient(config=config, logger=logger)
 
-    service = TelemetryService(config=config, client=client, logger=logger)
+    store = DeviceConfigStore(ShadowDeviceConfig.from_app_config(config))
+    shadow_bridge: ShadowBridge | None = None
+    if not args.dry_run:
+        shadow_bridge = ShadowBridge(
+            config=config,
+            client=client,
+            logger=logger,
+            store=store,
+        )
+
+    remote_poller: RemoteConfigPoller | None = None
+    if config.remote_config_url:
+        remote_poller = RemoteConfigPoller(config=config, store=store, logger=logger)
+
+    jobs_bridge: JobsBridge | None = None
+    if not args.dry_run and config.iot_jobs_enabled:
+        jobs_bridge = JobsBridge(config=config, client=client, logger=logger, store=store)
+
+    service = TelemetryService(
+        config=config,
+        client=client,
+        logger=logger,
+        store=store,
+        shadow=shadow_bridge,
+        remote_poller=remote_poller,
+        jobs=jobs_bridge,
+    )
 
     try:
         service.run(max_messages=args.count)

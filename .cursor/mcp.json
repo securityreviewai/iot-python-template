@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "security-review-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@securityreviewai/security-review-mcp@latest"
+      ],
+      "env": {
+        "SECURITY_REVIEW_API_URL": "https://app.demo.securityreview.ai",
+        "SECURITY_REVIEW_API_TOKEN": "UPDpzw5DkqHggXtD1KNGxPZZh_VPHVp3WJxcpqELHjPPlRBreuiFnzaxVnIZ0BDjdGuznkmKzH5bjXQFT3WNXA"
+      }
+    }
+  }
+}

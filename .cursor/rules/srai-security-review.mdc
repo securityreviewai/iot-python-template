@@ -1,0 +1,59 @@
+---
+description: SRAI Security Review gate — consult security-review-mcp before security-relevant code changes
+alwaysApply: true
+---
+
+# Security Review Kit Agent Instructions
+
+Configured SRAI project name: `iot-python`
+
+These instructions are always active for security-relevant coding work. Keep this file as the routing policy; use the skills and agents below for the detailed workflows.
+
+## Core Workflow
+
+For any task that touches auth, authorization, input handling, secrets, network, data storage, dependencies, new APIs/endpoints, infrastructure, or code handling untrusted data:
+
+1. **Fetch Vibe Guardrails first.**
+   - Read and follow `.cursor/skills/guardrails-selection/SKILL.md`.
+   - Resolve the SRAI project with `find_project_by_name` using `name="iot-python"`.
+   - Call `get_guardrails`, shortlist only the relevant project guardrails, then hydrate the exact shortlist with `get_guardrail_by_id`.
+   - Preserve that exact shortlist in context for implementation and CTM sync.
+
+2. **Run PWNISMS threat modelling before implementation.**
+   - Read and follow `.cursor/skills/threat-modelling/SKILL.md`.
+   - Explicitly walk all seven PWNISMS categories: Product, Workload, Network, IAM, Secrets, Monitoring, and Supply Chain.
+   - If a category is not applicable, say so briefly and continue.
+   - Cross-reference each meaningful threat with the shortlisted guardrails.
+
+3. **Implement secure code using both inputs.**
+   - Treat applicable `must` guardrails as mandatory.
+   - Treat applicable `must_not` guardrails as hard prohibitions.
+   - Use the PWNISMS findings to guide design, validation, authorization, logging, secrets handling, dependency choices, and abuse controls.
+   - If PWNISMS reveals a recurring security rule that is not covered by existing guardrails, create and apply an `ide_generated` guardrail in context.
+
+4. **Run CTM sync last.**
+   - After threat modelling is created or updated, or after guardrails are enforced during implementation, invoke the `ctm_sync` agent/workflow.
+   - Use `.cursor/agents/ctm_sync.md` for the detailed payload contract.
+   - Pass the current threat model summary, the stable `chat_session_id`, the exact existing guardrails shortlisted earlier, and any `ide_generated` guardrails.
+   - Do not re-query guardrails during CTM sync; reuse the shortlist selected before implementation.
+
+## When To Skip
+
+Skip the SRAI security workflow only for tasks with no security surface, such as documentation-only changes, typo fixes, pure formatting, variable renames with no logic change, or general Q&A that produces no code.
+
+If in doubt, run the workflow. A quick PWNISMS pass is better than silently missing a security boundary.
+
+## Do Not Use Project Profile Exploration
+
+Do not call project-profile exploration tools during normal coding tasks. The old profile walkthrough is no longer part of the agent workflow.
+
+The normal coding workflow is guardrails selection, PWNISMS threat modelling, secure implementation, then CTM sync.
+
+## Tool Reference
+
+| Purpose | Tools |
+|---|---|
+| Project resolution | `find_project_by_name`, `list_projects`, `create_project`, `get_project` |
+| Guardrails | `get_guardrails`, `get_guardrail_by_id` |
+| CTM sync | `create_ai_ide_workflow`, `create_ai_ide_event`, `get_current_user` or equivalent user identity tool |
+| Profiler only | `update_vibe_profile`, `write_default_pack` are used by init-time profiling, not normal coding tasks |

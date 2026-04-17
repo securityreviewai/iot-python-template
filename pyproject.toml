@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iot-python-template"
+version = "0.1.0"
+description = "Boilerplate template for AWS-hosted Python IoT applications."
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+  { name = "SecurityReviewAI" }
+]
+dependencies = []
+
+[project.optional-dependencies]
+aws = ["awsiotsdk>=1.22,<2"]
+dev = []
+
+[project.scripts]
+iot-template = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["app*"]

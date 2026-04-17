@@ -4,6 +4,13 @@ import os
 from dataclasses import dataclass
 
 
+def _env_flag(name: str, *, default: bool = True) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() not in ("0", "false", "no", "off", "")
+
+
 @dataclass(slots=True)
 class AppConfig:
     app_env: str
@@ -17,6 +24,14 @@ class AppConfig:
     iot_key_path: str
     iot_ca_path: str
     publish_interval_seconds: int
+    iot_shadow_name: str
+    shadow_enabled: bool
+    shadow_report_interval_seconds: int
+    remote_config_url: str
+    remote_config_poll_seconds: int
+    remote_config_timeout_seconds: float
+    remote_config_auth_header: str
+    jobs_enabled: bool
 
     @classmethod
     def from_env(cls) -> "AppConfig":
@@ -32,6 +47,20 @@ class AppConfig:
             iot_key_path=os.getenv("IOT_KEY_PATH", ""),
             iot_ca_path=os.getenv("IOT_CA_PATH", ""),
             publish_interval_seconds=int(os.getenv("PUBLISH_INTERVAL_SECONDS", "5")),
+            iot_shadow_name=os.getenv("IOT_SHADOW_NAME", ""),
+            shadow_enabled=_env_flag("IOT_SHADOW_ENABLED", default=True),
+            shadow_report_interval_seconds=int(
+                os.getenv("IOT_SHADOW_REPORT_INTERVAL_SECONDS", "60")
+            ),
+            remote_config_url=os.getenv("REMOTE_CONFIG_URL", ""),
+            remote_config_poll_seconds=int(
+                os.getenv("REMOTE_CONFIG_POLL_SECONDS", "300")
+            ),
+            remote_config_timeout_seconds=float(
+                os.getenv("REMOTE_CONFIG_TIMEOUT_SECONDS", "15")
+            ),
+            remote_config_auth_header=os.getenv("REMOTE_CONFIG_AUTH_HEADER", ""),
+            jobs_enabled=_env_flag("IOT_JOBS_ENABLED", default=True),
         )
 
     def missing_connection_fields(self) -> list[str]:
